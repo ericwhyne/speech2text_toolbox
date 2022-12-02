@@ -1,0 +1,75 @@
+<html>
+  <title>hello world s2t</title>
+  <head>
+    <style>
+      #logarea {
+        border: 1px solid black;
+        width: 640px;
+        height: 640px;
+      }
+      .highlight {
+        background-color: yellow;
+      }
+    </style>
+    <script>
+      const speechRecognizer = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+
+      function log(line) {
+        const area = document.getElementById('logarea');
+        area.value = area.value + line + '\n';
+        area.scrollTop = area.scrollHeight;
+      }
+      function highlight(text) {
+        var inputText = document.getElementById("readme");
+        var innerHTML = inputText.innerHTML;
+        var index = innerHTML.indexOf(text);
+        if (index >= 0) {
+         innerHTML = innerHTML.substring(0,index) + "<span class='highlight'>" + innerHTML.substring(index,index+text.length) + "</span>" + innerHTML.substring(index + text.length);
+         inputText.innerHTML = innerHTML;
+        }
+      }
+
+      document.addEventListener('DOMContentLoaded', () => {
+        const startButton = document.getElementById('startbutton');
+        startButton.addEventListener('click', event => {
+          speechRecognizer.abort();
+          speechRecognizer.continuous = true;
+          speechRecognizer.interimResults = true;
+          speechRecognizer.maxAlternatives = 3;
+          speechRecognizer.start();
+        });
+
+        const stopButton = document.getElementById('stopbutton');
+        stopButton.addEventListener('click', event => {
+          speechRecognizer.stop();
+        });
+
+        speechRecognizer.addEventListener('audiostart', () => log('START'));
+        speechRecognizer.addEventListener('audioend', () => log('END'));
+        speechRecognizer.addEventListener('end', () => log('DISCONNECT'));
+        speechRecognizer.addEventListener('error', event => log('ERROR: ' + event.message));
+        speechRecognizer.addEventListener('nomatch', () => log('no match'));
+        speechRecognizer.addEventListener('result', event => {
+          const results = event.results;
+          log("RESULTS:");
+          confidence_threshold = 0.8;
+          if(parseFloat(results[0][0].transcript) > parseFloat(confidence_threshold)){ //this is broken here
+            log(`word: ${results[0][0].transcript}`)
+          }
+          for (let r of results) {
+            log(`(length=${r.length}: final=${r.isFinal})`);
+            for (let i = 0; i < r.length; i++) {
+              log(`  (${r[i].confidence}) ${r[i].transcript}`);
+            }
+          }
+        });
+      });
+    </script>
+  </head>
+  <body>
+    <div><button id="startbutton">Start</button> <button id="stopbutton">Stop</button></div>
+    <div><textarea id="logarea"></textarea></div>
+    <br><br>
+    <div id="readme">Hello World! This is a test.<div>
+  </body>
+</html>
